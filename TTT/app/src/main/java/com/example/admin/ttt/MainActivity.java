@@ -1,14 +1,9 @@
 package com.example.admin.ttt;
 
-import android.app.Activity;
 import android.content.Intent;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
-import android.content.pm.Signature;
 import android.os.StrictMode;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Base64;
 import android.util.Log;
 
 import com.facebook.AccessToken;
@@ -19,25 +14,17 @@ import com.facebook.FacebookSdk;
 import com.facebook.GraphRequest;
 import com.facebook.GraphResponse;
 import com.facebook.HttpMethod;
-import com.facebook.login.LoginManager;
 import com.facebook.login.LoginResult;
 import com.facebook.login.widget.LoginButton;
 import com.google.gson.Gson;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.net.URL;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.spec.ECField;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -73,9 +60,13 @@ public class MainActivity extends AppCompatActivity {
 
 
                 loginButton.setReadPermissions(Arrays.asList(
-                        "public_profile", "email", "user_birthday", "user_friends","user_photos","user_education_history"));
+                        "public_profile", "email", "user_birthday","user_about_me", "user_friends","user_photos","user_education_history","user_work_history",
+                        "user_posts","read_custom_friendlists","user_friends","user_likes"));
 
                 AccessToken.getCurrentAccessToken().getPermissions();
+
+
+
 
 
                 final GraphRequest request = GraphRequest.newMeRequest(
@@ -101,33 +92,159 @@ public class MainActivity extends AppCompatActivity {
 //                                }
 //                                Log.d("URL cover photo: ", coverPhoto);
 //                                Log.d(TAG, coverPhoto);
+                                    Log.d(TAG, object.toString());
+
+
+
+
+//                                try {
+//                                    JSONArray jsonArray = object.getJSONObject("photos").getJSONArray("data");
+//                                    Log.d(TAG, jsonArray.toString());
+//                                    ArrayList<String> listdata = new ArrayList<String>();
+//                                    for(int i = 0; i  < jsonArray.length(); i ++){
+//                                        listdata.add(jsonArray.getString(i));
+//                                            Photo photo = new Gson().fromJson(jsonArray.getString(i), Photo.class);
+//                                            Log.d(TAG, photo.getId().toString()+"   id =)))");
+//                                        new GraphRequest(
+//                                                AccessToken.getCurrentAccessToken(),
+//                                                "/"+photo.getId().toString()+"/picture",
+//                                                null,
+//                                                HttpMethod.GET,
+//                                                new GraphRequest.Callback() {
+//                                                    public void onCompleted(GraphResponse response) {
+//                                                        Log.d(TAG, response.getConnection().toString());
+//
+//                                                    }
+//                                                }
+//                                        ).executeAsync();
+//
+//                                    }
+//                                } catch (JSONException e) {
+//                                    e.printStackTrace();
+//                                }
 
                                 try {
-
+                                    Log.d(TAG, object.getJSONObject("albums").getJSONObject("paging").getJSONObject("cursors").optString("after").toString()+"aaaa");
+                                    Log.d(TAG, object.getJSONObject("albums").getJSONArray("data").toString() +" albums");
+                                    JSONArray jsonArray = object.getJSONObject("albums").getJSONArray("data");
                                     ArrayList<String> listdata = new ArrayList<String>();
-                                    JSONArray jArray = object.getJSONArray("education");
-                                    if (jArray != null) {
-                                        for (int i=0;i<jArray.length();i++){
-                                            listdata.add(jArray.getString(i));
-                                            Education education = new Gson().fromJson(jArray.getString(i), Education.class);
-                                            Log.d(TAG, education.toString()+ "hihi");
-                                            Log.d(TAG, education.getSchool().getName()+"name trường =))) ");
-                                            Log.d(TAG, listdata.get(i).toString());
-                                        }
+                                    for(int i = 0; i  < jsonArray.length(); i ++){
+                                        listdata.add(jsonArray.getString(i));
+                                        Album album = new Gson().fromJson(jsonArray.getString(i), Album.class);
+                                        Log.d(TAG, album.getId().toString()+"   id =)))");
+                                        new GraphRequest(
+                                                AccessToken.getCurrentAccessToken(),
+                                                "/"+album.getId()+"/photos",
+                                                null,
+                                                HttpMethod.GET,
+                                                new GraphRequest.Callback() {
+                                                    public void onCompleted(GraphResponse response) {
+                                                       // Log.d(TAG, response.getConnection().toString()+"hihi");
+                                                        try {
+                                                            Log.d(TAG, response.getJSONObject().getJSONArray("data").toString());
+                                                            JSONArray jsonArray1 = response.getJSONObject().getJSONArray("data");
+                                                            ArrayList arrayList = new ArrayList<String>();
+                                                            for(int i = 0; i < jsonArray1.length(); i ++){
+                                                                Photo photo = new Gson().fromJson(jsonArray1.getString(i), Photo.class);
+                                                                Log.d(TAG, photo.getId()+"id=))))");
+                                                                new GraphRequest(
+                                                                        AccessToken.getCurrentAccessToken(),
+                                                                        "/"+photo.getId().toString()+"/picture",
+                                                                        null,
+                                                                        HttpMethod.GET,
+                                                                        new GraphRequest.Callback() {
+                                                                            public void onCompleted(GraphResponse response) {
+                                                                                Log.d(TAG, response.getConnection().toString());
+
+                                                                            }
+                                                                        }
+                                                                ).executeAsync();
+                                                            }
+                                                        } catch (JSONException e) {
+                                                            e.printStackTrace();
+                                                        }
+
+                                                    }
+                                                }
+                                        ).executeAsync();
+
                                     }
 
                                 } catch (JSONException e) {
                                     e.printStackTrace();
                                 }
 
-                                URL imageURL = extractFacebookIcon(id);
-                                Log.d("name: ",name);
-                                Log.d("id: ",id);
-                                Log.d("email: ",email);
-                                Log.d("link: ",link);
-                                Log.d("gender", gender);
-                                Log.d("birthday", birthday);
-                                Log.d("imageURL: ",imageURL.toString());
+                                final String[] afterString = {""};  // will contain the next page cursor
+                                final Boolean[] noData = {false};   // stop when there is no after cursor
+                                do {
+                                    Bundle params = new Bundle();
+                                    params.putString("after", afterString[0]);
+                                    new GraphRequest(
+                                            AccessToken.getCurrentAccessToken(),
+                                            object.optString("id") + "/likes",
+                                            params,
+                                            HttpMethod.GET,
+                                            new GraphRequest.Callback() {
+                                                @Override
+                                                public void onCompleted(GraphResponse graphResponse) {
+                                                    Log.d(TAG, graphResponse.toString());
+                                                    JSONObject jsonObject = graphResponse.getJSONObject();
+                                                    try {
+                                                        JSONArray jsonArray = jsonObject.getJSONArray("data");
+
+                                                        //  your code
+
+
+                                                        if(!jsonObject.isNull("paging")) {
+                                                            JSONObject paging = jsonObject.getJSONObject("paging");
+                                                            JSONObject cursors = paging.getJSONObject("cursors");
+                                                            if (!cursors.isNull("after"))
+                                                                afterString[0] = cursors.getString("after");
+                                                            else
+                                                                noData[0] = true;
+                                                        }
+                                                        else
+                                                            noData[0] = true;
+                                                    } catch (JSONException e) {
+                                                        e.printStackTrace();
+                                                    }
+                                                }
+                                            }
+                                    ).executeAndWait();
+                                }
+                                while(!noData[0] == true);
+//
+//                                try {
+//
+//                                    ArrayList<String> listdata = new ArrayList<String>();
+//                                    JSONArray jArray = object.getJSONArray("education");
+//                                    if (jArray != null) {
+//                                        for (int i=0;i<jArray.length();i++){
+//                                            listdata.add(jArray.getString(i));
+//                                            Education education = new Gson().fromJson(jArray.getString(i), Education.class);
+//                                            Log.d(TAG, education.toString()+ "hihi");
+//                                            Log.d(TAG, education.getSchool().getName()+"name trường =))) ");
+//                                            Log.d(TAG, listdata.get(i).toString());
+//                                        }
+//                                    }
+//
+//                                } catch (JSONException e) {
+//                                    e.printStackTrace();
+//                                }
+
+//                                URL imageURL = extractFacebookIcon(id);
+//                                Log.d("name: ",name);
+//                                Log.d("id: ",id);
+//                                Log.d("email: ",email);
+//                                Log.d("link: ",link);
+//                                Log.d("gender", gender);
+//                                Log.d("birthday", birthday);
+//                                Log.d("imageURL: ",imageURL.toString());
+                                try {
+                                    Log.d(TAG, object.getJSONObject("friends").toString() +"aa" );
+                                } catch (JSONException e) {
+                                    e.printStackTrace();
+                                }
 
                             }
                         });

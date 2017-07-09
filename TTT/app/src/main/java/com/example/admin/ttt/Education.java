@@ -1,5 +1,7 @@
 package com.example.admin.ttt;
 
+import com.example.admin.ttt.School;
+import com.example.admin.ttt.Year;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
